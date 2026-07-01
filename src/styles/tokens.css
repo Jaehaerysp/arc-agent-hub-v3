@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  /* Base surfaces — deep indigo-black, not pure black */
+  --bg-base: #08060f;
+  --bg-surface: #0e0b1a;
+  --bg-card: #131024;
+  --bg-glass: rgba(19, 16, 36, 0.6);
+  --bg-glass-strong: rgba(19, 16, 36, 0.85);
+  --bg-elevated: #17132b;
+
+  --border: rgba(167, 139, 250, 0.14);
+  --border-hover: rgba(167, 139, 250, 0.32);
+  --border-strong: rgba(167, 139, 250, 0.5);
+
+  /* Signature palette: indigo + violet + neon cyan accent */
+  --accent: #8b5cf6;
+  --accent-2: #6366f1;
+  --accent-neon: #22d3ee;
+  --accent-dim: rgba(139, 92, 246, 0.14);
+  --accent-glow: rgba(139, 92, 246, 0.45);
+  --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #6366f1 55%, #22d3ee 120%);
+  --gradient-radial: radial-gradient(circle at 20% -10%, rgba(139, 92, 246, 0.25), transparent 55%),
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.12), transparent 45%);
+
+  --success: #34d399;
+  --success-dim: rgba(52, 211, 153, 0.12);
+  --error: #fb7185;
+  --error-dim: rgba(251, 113, 133, 0.12);
+  --warning: #fbbf24;
+  --warning-dim: rgba(251, 191, 36, 0.12);
+
+  --text-primary: #f1eefc;
+  --text-secondary: #b7b0d4;
+  --text-muted: #6f688f;
+  --text-dim: #423d5c;
+
+  --font-display: 'Space Grotesk', 'DM Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 76px;
+  --header-h: 68px;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(8, 6, 15, 0.45);
+  --shadow-glow: 0 0 0 1px var(--border), 0 8px 32px rgba(139, 92, 246, 0.12);
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme='light'] {
+  --bg-base: #f6f4fc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-strong: rgba(255, 255, 255, 0.9);
+  --bg-elevated: #ffffff;
+
+  --border: rgba(99, 66, 220, 0.12);
+  --border-hover: rgba(99, 66, 220, 0.28);
+  --border-strong: rgba(99, 66, 220, 0.45);
+
+  --accent-dim: rgba(139, 92, 246, 0.1);
+
+  --text-primary: #1a1530;
+  --text-secondary: #4b4470;
+  --text-muted: #857fa3;
+  --text-dim: #b3adc9;
+
+  --shadow-md: 0 8px 24px rgba(99, 66, 220, 0.08);
+  --shadow-glow: 0 0 0 1px var(--border), 0 8px 32px rgba(139, 92, 246, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/arc-agent-hub/arc-agent-hub/security/advisories/new
+    about: Please do not report security issues as public GitHub issues — see SECURITY.md.
+  - name: 💬 Questions & discussion
+    url: https://github.com/arc-agent-hub/arc-agent-hub/discussions
+    about: Ask questions or discuss ideas before filing an issue.
