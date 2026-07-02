@@ -26,7 +26,13 @@ export function useJobs(provider, account) {
       const result = await listJobsForAccount(provider, account)
       setJobs(result)
     } catch (e) {
-      setError(e?.reason || e?.shortMessage || e?.message || 'Failed to load jobs')
+      // ethers v6 sometimes wraps a real RPC rejection (e.g. eth_getLogs
+      // range/result-size limits) in a generic "could not coalesce error"
+      // shortMessage. When that happens, the actual RPC-provided reason is
+      // in e.error / e.info.error — prefer that so the message shown is
+      // never the opaque wrapper text.
+      const underlying = e?.error?.message || e?.error?.details || e?.info?.error?.message
+      setError(underlying || e?.reason || e?.shortMessage || e?.message || 'Failed to load jobs')
     } finally {
       setLoading(false)
     }

@@ -24,6 +24,78 @@ import { getCommerceContract, getUsdcContract } from './contracts'
 import { AGENTIC_COMMERCE_ADDRESS, DEFAULT_JOB_EXPIRY_SECONDS, ZERO_ADDRESS } from './constants'
 import { hashText, formatJob } from './helpers'
 
+// --- eth_getLogs chunking -------------------------------------------------
+// Root cause of the "could not coalesce error" on the Jobs Overview page:
+// listJobsForAccount() used to call contract.queryFilter(filter) with no
+// block range, which defaults to fromBlock=0 -> toBlock='latest'. Arc
+// Testnet's RPC (like most public JSON-RPC endpoints) rejects eth_getLogs
+// calls whose block span or result size is too large. The rejection isn't
+// shaped like a standard JSON-RPC error object, so ethers v6 can't normalize
+// it into a specific error and falls back to its generic
+// "could not coalesce error" wrapper — which is why the real cause (a
+// too-large getLogs range) was showing up as an opaque message instead of
+// something actionable.
+//
+// Fix: never issue an unbounded getLogs call. Walk the chain in bounded
+// windows, and if a window still gets rejected (because the RPC's real
+// limit is smaller than our starting guess), shrink the window and retry
+// the same range instead of failing outright.
+const LOG_CHUNK_INITIAL_BLOCKS = 5000n
+const LOG_CHUNK_MIN_BLOCKS = 250n
+
+/**
+ * Runs contract.queryFilter(filter, fromBlock, toBlock) in bounded windows
+ * so a single request never asks the RPC for an unbounded/too-large block
+ * range (the condition that was surfacing as "could not coalesce error").
+ * Automatically shrinks the window and retries if the RPC still rejects it.
+ */
+async function queryFilterChunked(contract, filter, fromBlock, toBlock) {
+  const results = []
+  let chunkSize = LOG_CHUNK_INITIAL_BLOCKS
+  let cursor = fromBlock
+
+  while (cursor <= toBlock) {
+    const end = cursor + chunkSize - 1n > toBlock ? toBlock : cursor + chunkSize - 1n
+
+    try {
+      const logs = await contract.queryFilter(filter, cursor, end)
+      results.push(...logs)
+      cursor = end + 1n
+    } catch (err) {
+      if (chunkSize <= LOG_CHUNK_MIN_BLOCKS) {
+        // Already at the smallest window we're willing to try — this is a
+        // genuine RPC/network failure, not a range-size problem. Surface it.
+        throw err
+      }
+      const halved = chunkSize / 2n
+      chunkSize = halved < LOG_CHUNK_MIN_BLOCKS ? LOG_CHUNK_MIN_BLOCKS : halved
+      // retry the same `cursor` with the smaller window
+    }
+  }
+
+  return results
+}
+
+// Per-account, per-role log cache so the 20s poll in useJobs only scans new
+// blocks instead of re-walking the whole chain (and re-risking a
+// too-large-range rejection) on every refresh.
+const logScanCache = new Map()
+
+async function getLogsIncremental(contract, filter, provider, cacheKey) {
+  const currentBlock = BigInt(await provider.getBlockNumber())
+  const cached = logScanCache.get(cacheKey)
+  const fromBlock = cached ? cached.lastBlock + 1n : 0n
+
+  let logs = cached ? cached.logs : []
+  if (fromBlock <= currentBlock) {
+    const newLogs = await queryFilterChunked(contract, filter, fromBlock, currentBlock)
+    if (newLogs.length) logs = [...logs, ...newLogs]
+  }
+
+  logScanCache.set(cacheKey, { lastBlock: currentBlock, logs })
+  return logs
+}
+
 async function sendAndWait(tx) {
   const receipt = await tx.wait()
   return { txHash: tx.hash, receipt }
@@ -123,10 +195,12 @@ export async function getUsdcAllowance(signerOrProvider, owner) {
  */
 export async function listJobsForAccount(signerOrProvider, account) {
   const contract = getCommerceContract(signerOrProvider)
+  const runner = signerOrProvider.provider ?? signerOrProvider
+  const normalizedAccount = account.toLowerCase()
 
   const [asClient, asProvider] = await Promise.all([
-    contract.queryFilter(contract.filters.JobCreated(null, account)),
-    contract.queryFilter(contract.filters.JobCreated(null, null, account)),
+    getLogsIncremental(contract, contract.filters.JobCreated(null, account), runner, `client:${normalizedAccount}`),
+    getLogsIncremental(contract, contract.filters.JobCreated(null, null, account), runner, `provider:${normalizedAccount}`),
   ])
 
   const logByJobId = new Map()
@@ -136,17 +210,38 @@ export async function listJobsForAccount(signerOrProvider, account) {
   }
 
   const entries = [...logByJobId.entries()]
-  const uniqueBlocks = [...new Set(entries.map(([, log]) => log.blockNumber))]
-  const runner = signerOrProvider.provider ?? signerOrProvider
-  const blocks = await Promise.all(uniqueBlocks.map((blockNumber) => runner.getBlock(blockNumber)))
-  const timestampByBlock = new Map(uniqueBlocks.map((blockNumber, i) => [blockNumber, Number(blocks[i]?.timestamp ?? 0) * 1000]))
 
-  const jobs = await Promise.all(
+  const uniqueBlocks = [...new Set(entries.map(([, log]) => log.blockNumber))]
+  const blockResults = await Promise.allSettled(uniqueBlocks.map((blockNumber) => runner.getBlock(blockNumber)))
+  const timestampByBlock = new Map()
+  blockResults.forEach((result, i) => {
+    const blockNumber = uniqueBlocks[i]
+    if (result.status === 'fulfilled' && result.value) {
+      timestampByBlock.set(blockNumber, Number(result.value.timestamp) * 1000)
+    } else {
+      timestampByBlock.set(blockNumber, null)
+    }
+  })
+
+  const jobResults = await Promise.allSettled(
     entries.map(async ([jobId, log]) => {
       const job = await getJob(signerOrProvider, jobId)
       return { ...job, createdAt: timestampByBlock.get(log.blockNumber) || null, createdTxHash: log.transactionHash }
     })
   )
+
+  const jobs = []
+  jobResults.forEach((result) => {
+    if (result.status === 'fulfilled') jobs.push(result.value)
+  })
+
+  if (jobs.length === 0 && entries.length > 0) {
+    // Every single job lookup failed even though logs were found — this is
+    // a real failure (not "no jobs exist"), so surface the last underlying
+    // reason instead of silently showing an empty list.
+    const lastFailure = jobResults.find((r) => r.status === 'rejected')
+    throw lastFailure ? lastFailure.reason : new Error('Failed to resolve any job from on-chain logs')
+  }
 
   return jobs.sort((a, b) => Number(b.id) - Number(a.id))
 }
