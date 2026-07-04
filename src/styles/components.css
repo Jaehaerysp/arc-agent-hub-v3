@@ -608,3 +608,76 @@
 @keyframes dialogIn { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes chipPulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.35; } }
 @keyframes progressIndeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+
+/* ===== SHARED UI PRIMITIVES (v7) =====
+   Added for Mission 1 (Premium Landing Page). These back src/ui/GlassPanel,
+   Reveal, and SectionHeading — kept generic and framework-level (not
+   landing-specific) so Dashboard v7 and Marketplace v7 can adopt the same
+   primitives later without pulling in landing.css. Purely additive: no
+   existing selector above is touched by this block. */
+
+/* --- GlassPanel --- */
+.glass-panel {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.glass-panel-strong { background: var(--bg-glass-strong); }
+.glass-panel-glow { box-shadow: var(--shadow-glow); }
+.glass-panel-interactive {
+  transition: transform var(--duration-hover) var(--ease), border-color var(--duration-hover) var(--ease), box-shadow var(--duration-hover) var(--ease);
+}
+.glass-panel-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-glow-hover);
+}
+
+/* --- SectionHeading --- */
+.section-heading {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+.section-heading.align-left { margin: 0 0 28px; text-align: left; }
+.section-heading .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-neon);
+}
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  margin: 12px 0 10px;
+  letter-spacing: -0.01em;
+}
+.section-heading p {
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+/* --- Reveal --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
