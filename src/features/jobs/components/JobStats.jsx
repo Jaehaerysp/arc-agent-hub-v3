@@ -1,12 +1,17 @@
-import { StatCard } from '../../../ui/StatCard'
-import { Skeleton } from '../../../ui/Skeleton'
+import { Grid, MetricCard, Skeleton } from '../../../ui/design-system'
+import { AnimatedCounter } from '../../../ui/AnimatedCounter'
 import { formatTokenAmount } from '../../../lib/format'
+import { IconJob, IconCheck, IconClock, IconStar, IconWallet, IconActivity } from '../../../ui/icons'
+import { computeRunningJobs, computeSuccessRate, computeAverageCompletionTime, formatDuration } from '../jobsAnalytics'
 
 /**
  * Derives the Sprint-3 dashboard numbers (Total / Open / Funded / Submitted /
  * Completed / Total Escrow / Average Budget) from a jobs array. Pure and
  * read-only — every value comes from the job objects useJobs() already
  * returns, so this never re-touches the chain.
+ *
+ * Unchanged since Sprint 3 — DashboardPage and JobStats.test.js both
+ * depend on this exact shape.
  */
 export function computeJobStats(jobs) {
   const total = jobs.length
@@ -27,28 +32,65 @@ export function computeJobStats(jobs) {
   return { total, open, funded, submitted, completed, totalEscrow, averageBudget }
 }
 
-/** Reusable 7-card stats grid for the Jobs dashboard. */
-export function JobStats({ jobs, loading }) {
+/**
+ * Jobs v7 (Mission 6) — "Jobs Overview" metric grid. Six premium tiles:
+ * Open, Running, Completed, Escrow Locked, Average Duration, Success Rate.
+ * Only Success Rate carries the gradient `accent` treatment (the Jobs Hero
+ * above already used the gradient once, so exactly one tile uses it here,
+ * per the Blueprint's "gradient in at most three places" rule).
+ */
+export function JobStats({ jobs, loading, activity = [] }) {
   const isEmpty = loading && jobs.length === 0
   const stats = computeJobStats(jobs)
+  const running = computeRunningJobs(stats)
+  const success = computeSuccessRate(jobs)
+  const avgCompletion = computeAverageCompletionTime(activity)
+  const skeleton = <Skeleton width={48} height={28} />
 
   return (
-    <div className="stats-grid stats-grid-jobs">
-      <StatCard label="Total Jobs" value={isEmpty ? <Skeleton width={36} height={26} /> : stats.total} sub="Client or provider" />
-      <StatCard label="Open Jobs" value={isEmpty ? <Skeleton width={36} height={26} /> : stats.open} sub="Awaiting budget or funding" />
-      <StatCard label="Funded Jobs" value={isEmpty ? <Skeleton width={36} height={26} /> : stats.funded} accent sub="Escrow locked" />
-      <StatCard label="Submitted Jobs" value={isEmpty ? <Skeleton width={36} height={26} /> : stats.submitted} sub="Awaiting review" />
-      <StatCard label="Completed Jobs" value={isEmpty ? <Skeleton width={36} height={26} /> : stats.completed} accent sub="Fully settled on-chain" />
-      <StatCard
-        label="Total Escrow Value"
-        value={isEmpty ? <Skeleton width={70} height={26} /> : `${formatTokenAmount(stats.totalEscrow, 2)} USDC`}
+    <Grid columns={3} minColWidth="200px" gap="md" aria-label="Jobs overview">
+      <MetricCard
+        icon={<IconJob width={16} height={16} />}
+        label="Open Jobs"
+        value={isEmpty ? skeleton : <AnimatedCounter value={stats.open} duration={900} />}
+        sub="Awaiting budget or funding"
+      />
+
+      <MetricCard
+        icon={<IconActivity width={16} height={16} />}
+        label="Running Jobs"
+        value={isEmpty ? skeleton : <AnimatedCounter value={running} duration={1000} />}
+        sub="Funded + submitted"
+      />
+
+      <MetricCard
+        icon={<IconCheck width={16} height={16} />}
+        label="Completed"
+        value={isEmpty ? skeleton : <AnimatedCounter value={stats.completed} duration={1100} />}
+        sub="Fully settled on-chain"
+      />
+
+      <MetricCard
+        icon={<IconWallet width={16} height={16} />}
+        label="Escrow Locked"
+        value={isEmpty ? skeleton : `${formatTokenAmount(stats.totalEscrow, 2)} USDC`}
         sub="Funded + submitted jobs"
       />
-      <StatCard
-        label="Average Budget"
-        value={isEmpty ? <Skeleton width={70} height={26} /> : `${formatTokenAmount(stats.averageBudget, 2)} USDC`}
-        sub="Across jobs with a budget"
+
+      <MetricCard
+        icon={<IconClock width={16} height={16} />}
+        label="Average Duration"
+        value={isEmpty ? skeleton : formatDuration(avgCompletion.averageMs)}
+        sub={avgCompletion.sampleSize > 0 ? `Across ${avgCompletion.sampleSize} completed job${avgCompletion.sampleSize === 1 ? '' : 's'}` : 'Not enough data yet'}
       />
-    </div>
+
+      <MetricCard
+        icon={<IconStar width={16} height={16} />}
+        label="Success Rate"
+        accent
+        value={isEmpty ? skeleton : success.rate === null ? '—' : <AnimatedCounter value={success.rate} suffix="%" duration={1200} />}
+        sub={success.rate === null ? 'No settled jobs yet' : `${success.completed} completed · ${success.rejected + success.expired} unsuccessful`}
+      />
+    </Grid>
   )
 }

@@ -1,5 +1,4 @@
-import { Input } from '../../../ui/Field'
-import { IconSearch } from '../../../ui/icons'
+import { SearchInput } from '../../../ui/design-system'
 
 /**
  * Reusable search box for the Jobs dashboard and Job history table.
@@ -8,14 +7,12 @@ import { IconSearch } from '../../../ui/icons'
  */
 export function JobsSearch({ value, onChange, placeholder = 'Search by job ID, client, or provider address…' }) {
   return (
-    <div className="jobs-search-wrap">
-      <IconSearch width={15} height={15} className="jobs-search-icon" />
-      <Input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
+    <SearchInput
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onClear={() => onChange('')}
+      placeholder={placeholder}
+      className="jv7-search"
+    />
   )
 }

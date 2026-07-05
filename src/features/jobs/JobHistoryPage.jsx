@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useWalletContext } from '../../app/providers/WalletProvider'
 import { useJobs } from '../../hooks/useJobs'
-import { Card, CardBody, PanelHeader } from '../../ui/Card'
-import { Button } from '../../ui/Button'
-import { EmptyState } from '../../ui/EmptyState'
-import { Skeleton } from '../../ui/Skeleton'
+import { Panel, Button, EmptyState, Skeleton } from '../../ui/design-system'
 import { Alert } from '../../ui/Alert'
 import { IconJob } from '../../ui/icons'
 import { JobsTable } from './components/JobsTable'
@@ -58,50 +55,51 @@ export default function JobHistoryPage() {
   }
 
   return (
-    <Card>
-      <CardBody>
-        <PanelHeader icon={<IconJob width={18} height={18} />} title="Job history" subtitle="All jobs where you're the client or provider" />
+    <Panel
+      icon={<IconJob width={18} height={18} />}
+      title="Job history"
+      subtitle="All jobs where you're the client or provider"
+      actions={<Button variant="ghost" size="sm" onClick={refresh}>Refresh</Button>}
+      className="jv7-history-panel"
+    >
+      <div className="jv7-history-search-row">
+        <JobsSearch value={search} onChange={updateAndResetPage(setSearch)} />
+      </div>
 
-        <div className="jobs-search-filters-row">
-          <JobsSearch value={search} onChange={updateAndResetPage(setSearch)} />
-          <Button variant="ghost" size="sm" onClick={refresh}>Refresh</Button>
+      <JobsFilters
+        status={statusFilter}
+        onStatusChange={updateAndResetPage(setStatusFilter)}
+        sort={sort}
+        onSortChange={setSort}
+      />
+
+      {error && <Alert variant="error" title="Failed to load jobs">{error}</Alert>}
+
+      {!error && loading && jobs.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Skeleton height={36} />
+          <Skeleton height={36} />
+          <Skeleton height={36} />
         </div>
-
-        <JobsFilters
-          status={statusFilter}
-          onStatusChange={updateAndResetPage(setStatusFilter)}
-          sort={sort}
-          onSortChange={setSort}
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<IconJob width={22} height={22} />}
+          title="No jobs found"
+          description={jobs.length === 0 ? "Jobs where you're the client or provider will appear here." : 'Try a different search or filter.'}
         />
+      ) : (
+        <>
+          <JobsTable jobs={pageItems} account={account} arcExplorer={arcExplorer} />
 
-        {error && <Alert variant="error" title="Failed to load jobs">{error}</Alert>}
-
-        {!error && loading && jobs.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Skeleton height={36} />
-            <Skeleton height={36} />
-            <Skeleton height={36} />
-          </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={<IconJob width={22} height={22} />}
-            title="No jobs found"
-            description={jobs.length === 0 ? "Jobs where you're the client or provider will appear here." : 'Try a different search or filter.'}
-          />
-        ) : (
-          <>
-            <JobsTable jobs={pageItems} account={account} arcExplorer={arcExplorer} />
-
-            {totalPages > 1 && (
-              <div className="jobs-pagination">
-                <Button variant="ghost" size="sm" disabled={currentPage <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                <span className="field-hint">Page {currentPage} of {totalPages}</span>
-                <Button variant="ghost" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-              </div>
-            )}
-          </>
-        )}
-      </CardBody>
-    </Card>
+          {totalPages > 1 && (
+            <div className="jobs-pagination">
+              <Button variant="ghost" size="sm" disabled={currentPage <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+              <span className="field-hint">Page {currentPage} of {totalPages}</span>
+              <Button variant="ghost" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+            </div>
+          )}
+        </>
+      )}
+    </Panel>
   )
 }

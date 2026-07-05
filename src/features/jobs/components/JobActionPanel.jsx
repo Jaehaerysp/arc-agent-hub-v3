@@ -4,12 +4,8 @@ import { setBudget, approveUsdc, fundJob, submitDeliverable, completeJob } from 
 import { ZERO_ADDRESS } from '../../../lib/blockchain/constants'
 import { useAsyncAction } from '../../../hooks/useAsyncAction'
 import { useToast } from '../../../hooks/useToast'
-import { Card, CardBody, PanelHeader } from '../../../ui/Card'
-import { FieldGroup, Input, Textarea } from '../../../ui/Field'
+import { Panel, Button, Badge, FieldGroup, Input, Textarea } from '../../../ui/design-system'
 import { Alert } from '../../../ui/Alert'
-import { Button } from '../../../ui/Button'
-import { Spinner } from '../../../ui/Spinner'
-import { Badge } from '../../../ui/Badge'
 import { shortAddr } from '../../../lib/format'
 import { IconZap } from '../../../ui/icons'
 
@@ -50,30 +46,24 @@ export function JobActionPanel({ job, account, signer, allowance, arcExplorer, a
 
   if (!action) {
     return (
-      <Card>
-        <CardBody>
-          <PanelHeader icon={<IconZap width={18} height={18} />} title="Job actions" />
-          <Badge variant={job.status === 3 ? 'success' : 'error'}>{job.statusLabel}</Badge>
-          <p className="panel-desc" style={{ marginTop: 10 }}>
-            {job.status === 3
-              ? 'This job is complete. No further action is needed.'
-              : 'This job has reached a terminal state and has no further actions.'}
-          </p>
-        </CardBody>
-      </Card>
+      <Panel icon={<IconZap width={18} height={18} />} title="Job actions" className="jv7-action-panel">
+        <Badge variant={job.status === 3 ? 'completed' : 'rejected'}>{job.statusLabel}</Badge>
+        <p className="panel-desc" style={{ marginTop: 10 }}>
+          {job.status === 3
+            ? 'This job is complete. No further action is needed.'
+            : 'This job has reached a terminal state and has no further actions.'}
+        </p>
+      </Panel>
     )
   }
 
   if (action.key === 'loading') {
     return (
-      <Card>
-        <CardBody>
-          <PanelHeader icon={<IconZap width={18} height={18} />} title="Job actions" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 13 }}>
-            <Spinner /> Checking USDC allowance…
-          </div>
-        </CardBody>
-      </Card>
+      <Panel icon={<IconZap width={18} height={18} />} title="Job actions" className="jv7-action-panel">
+        <div className="jv7-action-loading-hint">
+          <span className="ds-spinner" aria-hidden="true" /> Checking USDC allowance…
+        </div>
+      </Panel>
     )
   }
 
@@ -155,92 +145,94 @@ export function JobActionPanel({ job, account, signer, allowance, arcExplorer, a
   }
 
   return (
-    <Card>
-      <CardBody>
-        <PanelHeader icon={<IconZap width={18} height={18} />} title="Job actions" subtitle={`Next step: ${actionTitle(action.key)}`} />
+    <Panel
+      icon={<IconZap width={18} height={18} />}
+      title="Job actions"
+      subtitle={`Next step: ${actionTitle(action.key)}`}
+      className="jv7-action-panel"
+    >
+      {!isCorrectWallet && (
+        <Alert variant="warning" title="Wrong wallet">
+          Only the job&apos;s {action.roleLabel} (<span className="mono">{shortAddr(action.allowedAddress)}</span>) can perform this step.
+        </Alert>
+      )}
 
-        {!isCorrectWallet && (
-          <Alert variant="warning" title="Wrong wallet">
-            Only the job&apos;s {action.roleLabel} (<span className="mono">{shortAddr(action.allowedAddress)}</span>) can perform this step.
-          </Alert>
-        )}
+      {action.key === 'setBudget' && (
+        <FieldGroup label="Budget (USDC)" hint="Pulled from the connected client wallet once approved and funded">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="100"
+            value={budgetInput}
+            onChange={(e) => { clearState(); setBudgetInput(e.target.value) }}
+            disabled={loading || !isCorrectWallet}
+          />
+        </FieldGroup>
+      )}
 
-        {action.key === 'setBudget' && (
-          <FieldGroup label="Budget (USDC)" hint="Pulled from the connected client wallet once approved and funded">
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="100"
-              value={budgetInput}
-              onChange={(e) => { clearState(); setBudgetInput(e.target.value) }}
-              disabled={loading || !isCorrectWallet}
-            />
-          </FieldGroup>
-        )}
+      {action.key === 'submit' && (
+        <FieldGroup label="Deliverable" hint="Hashed with keccak256 before being sent on-chain">
+          <Textarea
+            rows={4}
+            placeholder="Describe or link the completed work…"
+            value={deliverableText}
+            onChange={(e) => { clearState(); setDeliverableText(e.target.value) }}
+            disabled={loading || !isCorrectWallet}
+          />
+        </FieldGroup>
+      )}
 
-        {action.key === 'submit' && (
-          <FieldGroup label="Deliverable" hint="Hashed with keccak256 before being sent on-chain">
-            <Textarea
-              rows={4}
-              placeholder="Describe or link the completed work…"
-              value={deliverableText}
-              onChange={(e) => { clearState(); setDeliverableText(e.target.value) }}
-              disabled={loading || !isCorrectWallet}
-            />
-          </FieldGroup>
-        )}
+      {action.key === 'complete' && (
+        <FieldGroup label="Approval note" hint="Hashed with keccak256 before being sent on-chain">
+          <Textarea
+            rows={4}
+            placeholder="Reason for approving this deliverable…"
+            value={reasonText}
+            onChange={(e) => { clearState(); setReasonText(e.target.value) }}
+            disabled={loading || !isCorrectWallet}
+          />
+        </FieldGroup>
+      )}
 
-        {action.key === 'complete' && (
-          <FieldGroup label="Approval note" hint="Hashed with keccak256 before being sent on-chain">
-            <Textarea
-              rows={4}
-              placeholder="Reason for approving this deliverable…"
-              value={reasonText}
-              onChange={(e) => { clearState(); setReasonText(e.target.value) }}
-              disabled={loading || !isCorrectWallet}
-            />
-          </FieldGroup>
-        )}
+      {action.key === 'approve' && (
+        <p className="panel-desc">
+          Approve the Agentic Commerce contract to pull <strong>{job.budgetFormatted} USDC</strong> from your wallet when the job is funded.
+        </p>
+      )}
 
-        {action.key === 'approve' && (
-          <p className="panel-desc">
-            Approve the Agentic Commerce contract to pull <strong>{job.budgetFormatted} USDC</strong> from your wallet when the job is funded.
-          </p>
-        )}
+      {action.key === 'fund' && (
+        <p className="panel-desc">
+          USDC is approved. Fund the job to lock <strong>{job.budgetFormatted} USDC</strong> in escrow for the provider.
+        </p>
+      )}
 
-        {action.key === 'fund' && (
-          <p className="panel-desc">
-            USDC is approved. Fund the job to lock <strong>{job.budgetFormatted} USDC</strong> in escrow for the provider.
-          </p>
-        )}
+      {(formError || error) && <Alert variant="error" title="Action failed">{formError || error}</Alert>}
 
-        {(formError || error) && <Alert variant="error" title="Action failed">{formError || error}</Alert>}
+      {success && (
+        <Alert variant="success" title="Transaction confirmed">
+          <a href={`${arcExplorer}/tx/${success.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
+            View transaction ↗
+          </a>
+        </Alert>
+      )}
 
-        {success && (
-          <Alert variant="success" title="Transaction confirmed">
-            <a href={`${arcExplorer}/tx/${success.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
-              View transaction ↗
-            </a>
-          </Alert>
-        )}
-
-        <Button
-          variant="primary"
-          className="btn-block"
-          disabled={loading || !signer || !isCorrectWallet}
-          onClick={
-            action.key === 'setBudget' ? handleSetBudget
-            : action.key === 'approve' ? handleApprove
-            : action.key === 'fund' ? handleFund
-            : action.key === 'submit' ? handleSubmit
-            : handleComplete
-          }
-        >
-          {loading ? (<><Spinner /> Confirming…</>) : actionTitle(action.key)}
-        </Button>
-      </CardBody>
-    </Card>
+      <Button
+        variant="primary"
+        block
+        loading={loading}
+        disabled={!signer || !isCorrectWallet}
+        onClick={
+          action.key === 'setBudget' ? handleSetBudget
+          : action.key === 'approve' ? handleApprove
+          : action.key === 'fund' ? handleFund
+          : action.key === 'submit' ? handleSubmit
+          : handleComplete
+        }
+      >
+        {actionTitle(action.key)}
+      </Button>
+    </Panel>
   )
 }
 

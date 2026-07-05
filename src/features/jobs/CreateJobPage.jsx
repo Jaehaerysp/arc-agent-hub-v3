@@ -5,12 +5,8 @@ import { useWalletContext } from '../../app/providers/WalletProvider'
 import { useAsyncAction } from '../../hooks/useAsyncAction'
 import { useToast } from '../../hooks/useToast'
 import { createJob, setBudget } from '../../lib/blockchain/jobs'
-import { Card, CardBody, PanelHeader } from '../../ui/Card'
-import { FieldGroup, Input, Textarea } from '../../ui/Field'
+import { Panel, FieldGroup, Input, Textarea, Button, Badge } from '../../ui/design-system'
 import { Alert } from '../../ui/Alert'
-import { Button } from '../../ui/Button'
-import { Spinner } from '../../ui/Spinner'
-import { Badge } from '../../ui/Badge'
 import { IconJob } from '../../ui/icons'
 
 export default function CreateJobPage() {
@@ -108,59 +104,55 @@ export default function CreateJobPage() {
   }
 
   return (
-    <div className="two-col">
-      <Card>
-        <CardBody>
-          <PanelHeader icon={<IconJob width={18} height={18} />} title="Create job" subtitle="ERC-8183 Agentic Commerce" />
+    <div className="two-col jv7-create-layout">
+      <Panel icon={<IconJob width={18} height={18} />} title="Create job" subtitle="ERC-8183 Agentic Commerce" className="jv7-detail-panel">
+        {hiredAgentName && (
+          <Alert variant="success" title={`Hiring: ${hiredAgentName}`}>
+            The provider address below is pre-filled from the marketplace. You can still change it before submitting.
+          </Alert>
+        )}
 
-          {hiredAgentName && (
-            <Alert variant="success" title={`Hiring: ${hiredAgentName}`}>
-              The provider address below is pre-filled from the marketplace. You can still change it before submitting.
-            </Alert>
-          )}
+        <p className="panel-desc">
+          Creates a new job for a provider address. If you set a budget here, it&apos;s applied automatically right after creation —
+          you&apos;ll still need to approve USDC and fund the job from the job page.
+        </p>
 
-          <p className="panel-desc">
-            Creates a new job for a provider address. If you set a budget here, it&apos;s applied automatically right after creation —
-            you&apos;ll still need to approve USDC and fund the job from the job page.
-          </p>
+        <FieldGroup label="Provider address" hint="The agent or wallet that will perform the work">
+          <Input type="text" placeholder="0x..." value={provider} onChange={clearState(setProvider)} disabled={loading} />
+        </FieldGroup>
 
-          <FieldGroup label="Provider address" hint="The agent or wallet that will perform the work">
-            <Input type="text" placeholder="0x..." value={provider} onChange={clearState(setProvider)} disabled={loading} />
-          </FieldGroup>
+        <FieldGroup label={<>Evaluator address <Badge variant="muted">optional</Badge></>} hint="Leave blank to let the client approve completion">
+          <Input type="text" placeholder="0x... (defaults to none)" value={evaluator} onChange={clearState(setEvaluator)} disabled={loading} />
+        </FieldGroup>
 
-          <FieldGroup label={<>Evaluator address <Badge variant="muted">optional</Badge></>} hint="Leave blank to let the client approve completion">
-            <Input type="text" placeholder="0x... (defaults to none)" value={evaluator} onChange={clearState(setEvaluator)} disabled={loading} />
-          </FieldGroup>
+        <FieldGroup label="Description">
+          <Textarea rows={3} placeholder="What is this job for?" value={description} onChange={clearState(setDescription)} disabled={loading} />
+        </FieldGroup>
 
-          <FieldGroup label="Description">
-            <Textarea rows={3} placeholder="What is this job for?" value={description} onChange={clearState(setDescription)} disabled={loading} />
-          </FieldGroup>
+        <FieldGroup label={<>Budget (USDC) <Badge variant="muted">optional</Badge></>} hint="Applied via a second transaction right after the job is created">
+          <Input type="number" min="0" step="0.01" placeholder="100" value={budget} onChange={clearState(setBudgetInput)} disabled={loading} />
+        </FieldGroup>
 
-          <FieldGroup label={<>Budget (USDC) <Badge variant="muted">optional</Badge></>} hint="Applied via a second transaction right after the job is created">
-            <Input type="number" min="0" step="0.01" placeholder="100" value={budget} onChange={clearState(setBudgetInput)} disabled={loading} />
-          </FieldGroup>
+        <FieldGroup label={<>Expiration <Badge variant="muted">optional</Badge></>} hint="Defaults to 1 hour from now if left blank">
+          <Input type="datetime-local" value={expiration} onChange={clearState(setExpiration)} disabled={loading} />
+        </FieldGroup>
 
-          <FieldGroup label={<>Expiration <Badge variant="muted">optional</Badge></>} hint="Defaults to 1 hour from now if left blank">
-            <Input type="datetime-local" value={expiration} onChange={clearState(setExpiration)} disabled={loading} />
-          </FieldGroup>
+        {(formError || error) && <Alert variant="error" title="Create job failed">{formError || error}</Alert>}
 
-          {(formError || error) && <Alert variant="error" title="Create job failed">{formError || error}</Alert>}
+        {success?.txHash && (
+          <Alert variant="success" title="Job created">
+            <a href={`${arcExplorer}/tx/${success.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
+              View transaction ↗
+            </a>
+          </Alert>
+        )}
 
-          {success?.txHash && (
-            <Alert variant="success" title="Job created">
-              <a href={`${arcExplorer}/tx/${success.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">
-                View transaction ↗
-              </a>
-            </Alert>
-          )}
+        <Button variant="primary" block loading={loading} onClick={handleCreate} disabled={loading || !signer || submitted}>
+          {loading ? (step || 'Creating…') : submitted ? '✓ Created' : 'Create Job'}
+        </Button>
 
-          <Button variant="primary" className="btn-block" onClick={handleCreate} disabled={loading || !signer || submitted}>
-            {loading ? (<><Spinner /> {step || 'Creating…'}</>) : submitted ? '✓ Created' : 'Create Job'}
-          </Button>
-
-          {!account && <p className="field-hint" style={{ marginTop: 10 }}>Connect your wallet to create a job.</p>}
-        </CardBody>
-      </Card>
+        {!account && <p className="field-hint" style={{ marginTop: 10 }}>Connect your wallet to create a job.</p>}
+      </Panel>
     </div>
   )
 }

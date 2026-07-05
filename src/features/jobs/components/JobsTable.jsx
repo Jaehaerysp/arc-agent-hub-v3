@@ -1,24 +1,37 @@
 import { useNavigate } from 'react-router-dom'
 import { JobStatusBadge } from './JobStatusBadge'
-import { Button } from '../../../ui/Button'
+import { Button, Badge } from '../../../ui/design-system'
 import { shortAddr, formatDate, formatTime } from '../../../lib/format'
 import { IconExternal } from '../../../ui/icons'
 
+/** Escrow state is derived, not a separate on-chain field: locked while Funded/Submitted, released once Completed. */
+function escrowBadge(status) {
+  if (status === 1 || status === 2) return <Badge variant="confirmed" size="sm">Locked</Badge>
+  if (status === 3) return <Badge variant="completed" size="sm">Released</Badge>
+  return <span className="text-muted">—</span>
+}
+
+/**
+ * Jobs v7 (Mission 6) — "Active Jobs" professional table. Same data and
+ * row-click-to-detail behavior as before; visual language updated to the
+ * v7 design system (Badge, Button) with an explicit Escrow column so
+ * status and settlement read as two distinct facts, not one.
+ */
 export function JobsTable({ jobs, account, arcExplorer }) {
   const navigate = useNavigate()
 
   return (
-    <div className="jobs-table-wrap">
-      <table className="jobs-table">
+    <div className="jv7-table-wrap">
+      <table className="jv7-table">
         <thead>
           <tr>
-            <th>Job ID</th>
+            <th>Job</th>
             <th>Status</th>
             <th>Client</th>
-            <th>Provider</th>
-            <th>Budget</th>
+            <th>Agent</th>
+            <th>Reward</th>
+            <th>Escrow</th>
             <th>Created</th>
-            <th>Explorer</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -27,9 +40,9 @@ export function JobsTable({ jobs, account, arcExplorer }) {
             const isClient = account && job.client.toLowerCase() === account.toLowerCase()
             const isProvider = account && job.provider.toLowerCase() === account.toLowerCase()
             return (
-              <tr key={job.id} className="jobs-table-row" onClick={() => navigate(`/jobs/${job.id}`)}>
-                <td className="mono">#{job.id}</td>
-                <td><JobStatusBadge status={job.status} label={job.statusLabel} /></td>
+              <tr key={job.id} className="jv7-table-row" onClick={() => navigate(`/jobs/${job.id}`)}>
+                <td className="mono jv7-table-id">#{job.id}</td>
+                <td><JobStatusBadge status={job.status} label={job.statusLabel} size="sm" /></td>
                 <td className="mono">
                   {shortAddr(job.client)}
                   {isClient && <span className="role-pill client" style={{ marginLeft: 6 }}>You</span>}
@@ -39,9 +52,11 @@ export function JobsTable({ jobs, account, arcExplorer }) {
                   {isProvider && <span className="role-pill provider" style={{ marginLeft: 6 }}>You</span>}
                 </td>
                 <td className="mono">{job.budgetFormatted} USDC</td>
-                <td>{job.createdAt ? <>{formatDate(job.createdAt)} <span className="text-muted">{formatTime(job.createdAt)}</span></> : '—'}</td>
+                <td>{escrowBadge(job.status)}</td>
                 <td>
-                  {job.createdTxHash ? (
+                  {job.createdAt ? (
+                    <>{formatDate(job.createdAt)} <span className="text-muted">{formatTime(job.createdAt)}</span></>
+                  ) : job.createdTxHash ? (
                     <a
                       href={`${arcExplorer}/tx/${job.createdTxHash}`}
                       onClick={(e) => e.stopPropagation()}
@@ -50,7 +65,7 @@ export function JobsTable({ jobs, account, arcExplorer }) {
                       className="tx-link"
                       title="View creation tx on ArcScan"
                     >
-                      <IconExternal width={13} height={13} />
+                      View tx <IconExternal width={12} height={12} />
                     </a>
                   ) : '—'}
                 </td>
