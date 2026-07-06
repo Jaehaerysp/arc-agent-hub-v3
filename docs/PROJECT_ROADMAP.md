@@ -1,5 +1,7 @@
 # Project Roadmap
 
+> **v7.0.0 note:** the up-to-date, high-level completed/future list now lives in the root **[ROADMAP.md](../ROADMAP.md)**. This file is kept as the detailed historical record through v5.1.0 (Missions 1–5 predate the "Mission" naming and are documented here under their sprint/version names).
+
 ## Shipped
 
 | Release | Summary |

@@ -1,0 +1,26 @@
+# Code owners for Arc Agent Hub.
+#
+# These owners are requested for review automatically when a matching
+# path changes in a Pull Request. Update the usernames below to match
+# your actual GitHub team before relying on this for review routing.
+
+# Default owner for everything not matched more specifically below.
+* @Jaehaerysp
+
+# Smart-contract / on-chain integration surface — changes here should
+# get an extra careful look (addresses, ABIs, chain config).
+/src/contracts/        @Jaehaerysp
+/src/lib/blockchain/    @Jaehaerysp
+/src/chains/            @Jaehaerysp
+/src/hooks/useWallet.js @Jaehaerysp
+/src/hooks/useContractWrite.js @Jaehaerysp
+/src/app/providers/     @Jaehaerysp
+
+# Design system — shared UI primitives used across every feature.
+/src/ui/design-system/  @Jaehaerysp
+
+# Release / repo hygiene docs.
+/README.md              @Jaehaerysp
+/CHANGELOG.md           @Jaehaerysp
+/ROADMAP.md             @Jaehaerysp
+/.github/               @Jaehaerysp

@@ -1,8 +1,6 @@
-## Summary
+## What changed
 
-<!-- What does this PR change, and why? -->
-
-## Related issue
+<!-- Describe what changed and why. Link any related issue. -->
 
 Closes #
 
@@ -10,25 +8,23 @@ Closes #
 
 - [ ] Bug fix
 - [ ] New feature
-- [ ] UI / design polish
 - [ ] Documentation
-- [ ] Refactor / chore (no behavior change)
-
-## Screenshots
-
-<!-- If this touches the UI, add before/after screenshots or a short clip. -->
-
-## How was this tested?
-
-<!-- Manual steps, wallets, and networks used to verify. -->
-
-- [ ] `npm run build` succeeds with no errors
-- [ ] `npm run lint` passes
-- [ ] Verified on Arc Testnet with a connected wallet
+- [ ] Refactor / internal cleanup
+- [ ] Chore (deps, CI, tooling)
 
 ## Checklist
 
-- [ ] I did not hardcode a contract address, ABI, or chain constant outside `src/contracts/registry.js` / `src/chains/arc.js`
-- [ ] I reused existing primitives from `src/ui/` where possible
-- [ ] I followed the existing design tokens in `src/styles/tokens.css`
-- [ ] I updated relevant docs (`README.md`, `ARCHITECTURE.md`, `CHANGELOG.md`) if behavior changed
+- [ ] `npm run build` succeeds
+- [ ] `npm run lint` passes
+- [ ] `npm test` passes
+- [ ] I reused existing `src/ui/` / `src/ui/design-system/` primitives instead of writing new one-off markup
+- [ ] No contract address, ABI, chain id, RPC, or explorer URL was hardcoded outside `src/contracts/registry.js` / `src/chains/arc.js`
+
+## Manual verification
+
+<!-- Call out any behavior a reviewer should verify by hand, e.g.: -->
+<!-- wallet connect, agent registration, hiring an agent, Trust Center feedback/validation submission, transfer, network switch -->
+
+## Screenshots (if UI changed)
+
+<!-- Before/after screenshots or a short clip help a lot here. -->

@@ -1,6 +1,6 @@
 # Architecture
 
-Arc Agent Hub uses a **feature-based architecture**: code is grouped by what it does for the user (agents, reputation, validation…) rather than by technical layer.
+Arc Agent Hub uses a **feature-based architecture**: code is grouped by what it does for the user (agents, trust, wallet…) rather than by technical layer.
 
 ```
 src/
@@ -25,8 +25,18 @@ src/
         AgentCard.jsx         Marketplace tile — click to view profile, "Hire" button routes straight to /jobs/create
         AgentProfileCard.jsx  Full profile view + "Hire this agent" panel, used by AgentProfilePage
         RegisterAgentPanel.jsx  The pre-Marketplace agents body (ERC-8004 register() call), unchanged, now under the "Register Agent" tab
-    reputation/
-    validation/
+    trust/                 Merged Trust Center (route /trust) — reputation feedback + validation requests,
+                             trust score, certificates, on-chain evidence, badges, security insights
+                             (/reputation and /validation redirect here for backward compatibility)
+      TrustCenterPage.jsx
+      trustAnalytics.js      Pure selectors deriving every figure from local wallet activity —
+                              no registry getter exists to read scores/decisions back from chain
+      components/
+        FeedbackFormPanel.jsx        giveFeedback() — preserved verbatim from the old ReputationPage
+        ValidationRequestPanel.jsx   validationRequest() — preserved verbatim from the old ValidationPage
+    wallet/                Portfolio, balances, network status, and transaction history (route /wallet)
+      WalletPage.jsx
+      walletAnalytics.js
     transfer/
     settings/
     developer-tools/
@@ -134,7 +144,7 @@ lib/blockchain/
   index.js        barrel export
 ```
 
-**One deliberate change from the SDK, and why:** the SDK's scripts sign transactions with raw private keys loaded from a `.env` file (`CLIENT_PRIVATE_KEY` / `PROVIDER_PRIVATE_KEY`) — a Node-only pattern appropriate for a CLI testing tool. That pattern is **not** ported into the app. A browser app must never hold a private key, so every write function in `jobs.js` instead takes a `signer` argument — the same connected-wallet `ethers.Signer` that `AgentsPage`, `ReputationPage`, `ValidationPage` and `TransferPage` already pull from `useWalletContext()`. Likewise, the SDK's `storage.ts` persisted the active job id to a local `job.json` file; the browser has no filesystem, so job ids are simply passed as normal values (route params, form state, or the existing `useLocalStorage` hook) instead.
+**One deliberate change from the SDK, and why:** the SDK's scripts sign transactions with raw private keys loaded from a `.env` file (`CLIENT_PRIVATE_KEY` / `PROVIDER_PRIVATE_KEY`) — a Node-only pattern appropriate for a CLI testing tool. That pattern is **not** ported into the app. A browser app must never hold a private key, so every write function in `jobs.js` instead takes a `signer` argument — the same connected-wallet `ethers.Signer` that `AgentsPage`, `TrustCenterPage` and `TransferPage` already pull from `useWalletContext()`. Likewise, the SDK's `storage.ts` persisted the active job id to a local `job.json` file; the browser has no filesystem, so job ids are simply passed as normal values (route params, form state, or the existing `useLocalStorage` hook) instead.
 
 A second adaptation: the SDK is written in TypeScript (`.ts`), but this project's Vite/ESLint toolchain is plain JavaScript (`.jsx`/`.js`, no `tsconfig`, no TS build step). The blockchain lib is therefore implemented as `.js` with the same structure and JSDoc-style comments, rather than introducing a parallel TypeScript toolchain for one folder.
 

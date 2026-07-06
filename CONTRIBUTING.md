@@ -2,6 +2,12 @@
 
 Thanks for your interest in improving Arc Agent Hub.
 
+## Branch strategy
+
+- `main` is always deployable — every commit on `main` should pass `npm run build`, `npm run lint`, and `npm test`.
+- Work happens on short-lived feature branches off `main` (e.g. `feature/trust-center-polish`, `fix/wallet-balance-refresh`). This repo's own v7 redesign work happened on `feature/v7-premium-ui` before merging.
+- Open a Pull Request against `main` when a branch is ready for review; avoid long-lived branches that drift far from `main`.
+
 ## Development setup
 
 ```bash
@@ -31,6 +37,7 @@ npm test
 - Never hardcode a contract address or ABI fragment inside a feature file. Add it to `src/contracts/registry.js` (and `src/contracts/abis/` if it's a new contract) and import from there.
 - Never hardcode chain id / RPC / explorer URL. Import from `src/chains/arc.js`.
 - Use `useContractWrite` for any write transaction so loading/error/success state and activity logging stay consistent across features.
+- The Reputation and Validation registries have no getters — only `giveFeedback()` and `validationRequest()`. The Trust Center (`src/features/trust/`) derives all of its scores/charts from the local wallet activity log rather than an on-chain read; keep that pattern (and its documentation in `trustAnalytics.js`) in mind if you touch that feature.
 
 ## Working with the ERC-8183 job lifecycle
 

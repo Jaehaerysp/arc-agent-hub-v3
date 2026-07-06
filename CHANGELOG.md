@@ -1,5 +1,30 @@
 # Changelog
 
+## v7.0.0 — Production Release
+
+Missions 6–10: Jobs Platform, Trust Center, Wallet Ecosystem, Global Production Polish, and Production Release prep. This is the first release documented under the "Mission" naming used internally for this redesign arc; it supersedes v5.1.0 as the current stable line.
+
+### Added
+- **Jobs Platform (Mission 6)** — `src/features/jobs/` redesigned onto the v7 premium design system (`jobs-v7.css`), with a stats grid, search/filter, activity timeline, and per-job action panel, reusing `GlassCard`/`Panel`/`MetricCard`/`Grid` from `src/ui/design-system/`.
+- **Trust Center (Mission 7)** — `src/features/trust/TrustCenterPage.jsx` merges the previous Reputation and Validation pages into one page at `/trust`: trust score/tier, validation status timeline, reputation timeline, verification history table, five pure-SVG analytics charts, certificates, on-chain evidence, achievement badges, security insights, recent events, and quick actions. `giveFeedback()`/`validationRequest()` business logic is preserved verbatim from the removed pages; every displayed figure is derived from local wallet activity via `src/features/trust/trustAnalytics.js` (documented limitation: neither registry ABI exposes a getter to read scores/validation decisions back from chain).
+- **Wallet Ecosystem (Mission 8)** — `src/features/wallet/WalletPage.jsx` at `/wallet`: portfolio summary, asset balances, network status, recent-transactions table, wallet activity timeline, and quick actions, backed by `walletAnalytics.js` (with unit tests).
+- **Global Production Polish (Mission 9)** — cross-page accessibility, responsive, and empty/loading-state pass across the v7 pages.
+- **Production release scaffolding (Mission 10)** — `.github/CODEOWNERS`, `.github/ISSUE_TEMPLATE/` (bug report, feature request), `.github/PULL_REQUEST_TEMPLATE.md`, and `.github/workflows/` (`build.yml`, `lint.yml`, `test.yml`). Root-level `ROADMAP.md`.
+
+### Changed
+- `nav.js` — the two former "Reputation" / "Validation" sidebar entries are now a single "Trust Center" entry.
+- `package.json` version bumped from the stale `6.0.0-m4` to `7.0.0`.
+- `README.md`, `CONTRIBUTING.md`, `RELEASE_NOTES.md` rewritten/updated to describe the current v7 feature set and repository conventions.
+
+### Breaking changes
+- **Routes:** `/reputation` and `/validation` are removed as standalone pages. Both now redirect (`<Navigate replace>`) to `/trust`, so existing bookmarks and links keep working, but any code that imported `ReputationPage`/`ValidationPage` directly needs to import from `src/features/trust/` instead.
+- `src/features/reputation/` and `src/features/validation/` were deleted.
+
+### Preserved (unchanged, verified working)
+- All ERC-8004/ERC-8183 contract addresses, ABI signatures, RPC endpoint, and explorer URL — untouched.
+- `src/contracts/*`, `src/lib/blockchain/*`, `WalletProvider`, `useWallet`, `useJob`/`useJobs`, `useContractWrite` — untouched.
+- Landing, Dashboard, Marketplace, Agent Profile, Settings, and Developer Tools pages — untouched by Missions 7–10.
+
 ## v5.1.0 — Stabilization & Developer Experience
 
 No user-facing behavior changes. This release focuses entirely on documentation accuracy, test coverage, and internal cleanup.
