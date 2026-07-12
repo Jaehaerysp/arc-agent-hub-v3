@@ -84,7 +84,6 @@
   font-family: var(--font-display);
   font-weight: 600;
 }
-.landing-brand-text { font-size: 15px; }
 .landing-nav-links {
   display: flex;
   align-items: center;

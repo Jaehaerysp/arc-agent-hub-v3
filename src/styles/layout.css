@@ -59,6 +59,10 @@
   object-fit: cover;
   border-radius: var(--radius-sm);
 }
+.app-logo-horizontal {
+  object-fit: contain;
+  border-radius: 0;
+}
 
 .brand-text {
   display: flex;

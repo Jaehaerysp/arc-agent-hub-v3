@@ -19,8 +19,7 @@ export function Navbar() {
     <header className={`landing-nav ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="landing-shell landing-nav-row">
         <a href="#top" className="landing-brand">
-          <span className="brand-mark"><AppLogo size={34} /></span>
-          <span className="landing-brand-text">Arc Agent Hub</span>
+          <AppLogo variant="horizontal" size={40} />
         </a>
         <nav className="landing-nav-links" aria-label="Section">
           {NAV_LINKS.map((link) => (

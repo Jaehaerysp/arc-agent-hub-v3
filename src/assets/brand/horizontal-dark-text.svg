@@ -1,0 +1,20 @@
+<svg width="1400" height="380" viewBox="0 0 1400 380" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(64,46) scale(0.74)">
+    <defs><linearGradient id="gL" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="55%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#3B6BF5"/>
+    </linearGradient>
+    <linearGradient id="gR" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="55%" stop-color="#6D5EF0"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient></defs>
+  <path d="M200,64 L100,336 L108,342 L158,342 L200,210 Z" fill="url(#gL)"/>
+  <path d="M200,64 L300,336 L292,342 L242,342 L200,210 Z" fill="url(#gR)"/>
+  <rect x="170" y="278" width="25.0" height="20" rx="10" fill="#0B1220"/>
+  <rect x="205.0" y="278" width="25.0" height="20" rx="10" fill="#0B1220"/>
+  </g>
+  <text x="336" y="188" font-family="Space Grotesk" font-weight="700" font-size="104" fill="#0B1220" letter-spacing="0.5">Arc Agent Hub</text>
+  <text x="338" y="238" font-family="Space Grotesk" font-weight="500" font-size="30" fill="#5B6B85" letter-spacing="6">AI WORKFORCE PLATFORM</text>
+</svg>
