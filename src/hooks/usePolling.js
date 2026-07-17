@@ -1,53 +1,33 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 /**
- * Calls `fn` immediately when polling starts, then repeats every
- * `intervalMs` while `enabled` is true.
+ * Calls `fn` once immediately, then every `intervalMs` for as long as
+ * `enabled` stays true, clearing the interval on unmount or whenever `fn`,
+ * `intervalMs`, or `enabled` changes.
  *
- * Improvements:
- * - Prevents overlapping requests
- * - Pauses when browser tab is hidden
- * - Cleans up correctly
+ * Extracted from the identical refresh+interval+cleanup shape that
+ * `useBalances` and `useJobs` each implemented independently. Both hooks
+ * already guard their own `fn` against a missing provider/account (resetting
+ * state to null/empty), so `enabled` only needs to control whether a repeat
+ * timer is scheduled — it does not skip the initial call. This preserves
+ * the exact previous behavior of both hooks:
+ *
+ *   useEffect(() => {
+ *     refresh()
+ *     if (!provider || !account) return
+ *     const interval = setInterval(refresh, POLL_INTERVAL_MS)
+ *     return () => clearInterval(interval)
+ *   }, [refresh, provider, account])
+ *
+ * @param {() => void} fn - Function to call immediately and on each tick.
+ * @param {number} intervalMs - Delay between calls, in milliseconds.
+ * @param {boolean} [enabled=true] - Whether repeat polling should run.
  */
 export function usePolling(fn, intervalMs, enabled = true) {
-  const intervalRef = useRef(null)
-  const runningRef = useRef(false)
-
   useEffect(() => {
-    if (!enabled) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-      return
-    }
-
-    const execute = async () => {
-      // Skip if previous execution still running
-      if (runningRef.current) return
-
-      // Skip when tab is hidden
-      if (document.visibilityState !== 'visible') return
-
-      runningRef.current = true
-
-      try {
-        await fn()
-      } finally {
-        runningRef.current = false
-      }
-    }
-
-    // Initial load
-    execute()
-
-    intervalRef.current = setInterval(execute, intervalMs)
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
+    fn()
+    if (!enabled) return
+    const interval = setInterval(fn, intervalMs)
+    return () => clearInterval(interval)
   }, [fn, intervalMs, enabled])
 }
