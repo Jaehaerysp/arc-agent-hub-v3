@@ -6,8 +6,7 @@
 // never drift from what the connected app actually talks to.
 
 import { CONTRACTS } from '../../contracts/registry'
-import { ARC_CHAIN_ID, ARC_RPC_URL } from '../../chains/arc'
-import { AGENTS } from '../../data/agents'
+import { ARC_RPC_URL } from '../../chains/arc'
 import {
   IconAgent,
   IconStar,
@@ -17,7 +16,13 @@ import {
   IconTools,
   IconWallet,
   IconLayers,
+  IconBridge,
+  IconSwap,
+  IconBriefcase,
+  IconCheck,
+  IconBook,
   IconActivity,
+  IconZap,
 } from '../../ui/icons'
 
 export const REPO_URL = 'https://github.com/Jaehaerysp/arc-agent-hub-v8'
@@ -26,18 +31,7 @@ export const DOCS_URL = 'https://docs.arc.network'
 export const NAV_LINKS = [
   { href: '#platform', label: 'Platform' },
   { href: '#features', label: 'Features' },
-  { href: '#architecture', label: 'Architecture' },
-  { href: '#roadmap', label: 'Roadmap' },
-]
-
-// --- Animated Statistics ---
-// Verifiable facts about the shipped product, not invented usage metrics —
-// a testnet reference dapp shouldn't claim user counts it doesn't have.
-export const STATS = [
-  { value: 4, suffix: '', label: 'On-chain registries wired end to end' },
-  { value: 12, suffix: '', label: 'Feature pages, one design system' },
-  { value: 0, suffix: '', label: 'Private keys ever touch this app' },
-  { value: 100, suffix: '%', label: 'Non-custodial, browser wallet only' },
+  { href: '#community', label: 'Community' },
 ]
 
 // --- Platform Overview pillars ---
@@ -73,90 +67,229 @@ export const PILLARS = [
   address: CONTRACTS[pillar.key]?.address,
 }))
 
-// --- Core Features ---
-export const FEATURES = [
+// --- Marquee strip ---
+// Module preview chips for the infinite scroll strip. These are icon +
+// label cards, not screenshots — nothing here claims to be a literal
+// product photo, so there's nothing to keep in sync or risk overstating.
+export const MARQUEE_MODULES = [
+  { icon: IconAgent, label: 'Identity Registry' },
+  { icon: IconStar, label: 'Reputation Registry' },
+  { icon: IconShield, label: 'Validation Registry' },
+  { icon: IconTransfer, label: 'ANV Transfer' },
+  { icon: IconDashboard, label: 'Live Dashboard' },
+  { icon: IconLayers, label: 'Marketplace' },
+  { icon: IconTools, label: 'Developer Tools' },
+  { icon: IconWallet, label: 'Wallet Connect' },
+]
+
+// --- Mission quote ---
+// First-person-plural statement from the project itself, not attributed to
+// an invented individual or a fabricated customer endorsement.
+export const MISSION_QUOTE = 'We wanted a reference implementation that took ERC-8004 seriously — one you could actually read, run, and verify on-chain, not just a pitch deck.'
+
+// Real technologies the app is actually built on (verifiable in package.json),
+// standing in for the "partner logos" row — nothing here is a claimed client.
+export const BUILT_WITH = ['Arc Testnet', 'ERC-8004', 'ethers.js', 'React']
+
+// --- Platform Modules (replaces pricing cards) ---
+export const PLATFORM_MODULES = [
   {
-    icon: IconAgent,
-    title: 'Agent Identity',
-    desc: 'Register an on-chain ERC-8004 identity in one transaction, with a verifiable agent profile and explorer link.',
+    tone: 'dark',
+    title: 'Core Registries',
+    desc: 'The four on-chain contracts every agent interaction runs through.',
+    tag: 'Open source \u00b7 MIT licensed',
+    items: PILLARS.map((p) => p.title),
+    primaryHref: '/dashboard',
+    primaryLabel: 'Launch App',
+    secondaryHref: DOCS_URL,
+    secondaryLabel: 'How it works',
+  },
+  {
+    tone: 'light',
+    title: 'Builder Tools',
+    desc: 'Everything wrapped around the registries so you can ship on top of them.',
+    tag: 'Non-custodial \u00b7 browser wallet only',
+    items: ['Live Dashboard', 'Agent Marketplace', 'Developer Tools', 'Full Documentation'],
+    primaryHref: REPO_URL,
+    primaryLabel: 'View source',
+  },
+]
+
+// --- Community & Ecosystem (replaces client testimonial carousel) ---
+// Principles the project actually holds itself to, rather than invented
+// third-party endorsements standing in for social proof it doesn't have.
+export const ECOSYSTEM_PRINCIPLES = [
+  { title: 'Open Source', desc: 'The full stack \u2014 contracts, dashboard, and this landing page \u2014 is public and MIT licensed.' },
+  { title: 'Non-Custodial', desc: 'Every signed action goes through your own browser wallet. The app never touches a private key.' },
+  { title: 'ERC-8004 Native', desc: 'Identity, reputation, and validation follow the standard directly \u2014 no proprietary detour.' },
+  { title: 'Single Source of Truth', desc: 'Contract addresses and chain config live in one place, and every page reads from it.' },
+  { title: 'Testnet First', desc: 'Built on Arc Testnet so the whole flow can be explored without real funds at risk.' },
+]
+
+// --- Platform Features (replaces project showcase) ---
+export const FEATURE_SHOWCASE = [
+  {
+    title: 'Identity & Reputation',
+    desc: 'Register a verifiable ERC-8004 identity, then track scored feedback as it accumulates into a reputation timeline.',
+  },
+  {
+    title: 'Marketplace',
+    desc: 'Browse registered agents, filter by category and track record, and see live availability at a glance.',
+  },
+  {
+    title: 'Live Dashboard',
+    desc: 'Wallet balances, agent status, network health, and recent on-chain activity in a single view.',
+  },
+]
+
+// --- Treasury Suite ---
+// Mirrors the app's real money-movement routes 1:1 (src/app/App.jsx) so this
+// section can't claim a capability the connected app doesn't actually have.
+export const TREASURY_FEATURES = [
+  {
+    icon: IconWallet,
+    title: 'Wallet',
+    href: '/wallet',
+    desc: 'Non-custodial balances and portfolio view, read straight from your connected browser wallet.',
+  },
+  {
+    icon: IconTransfer,
+    title: 'Transfer',
+    href: '/transfer',
+    desc: 'Send ANV to any address in a couple of clicks, with full on-chain confirmation.',
+  },
+  {
+    icon: IconBriefcase,
+    title: 'Payments',
+    href: '/payments',
+    desc: 'Settle job payouts and one-off invoices without leaving the app.',
+  },
+  {
+    icon: IconBridge,
+    title: 'Bridge',
+    href: '/bridge',
+    desc: 'Move assets between supported networks with a guided, status-tracked bridge flow.',
+  },
+  {
+    icon: IconSwap,
+    title: 'Swap',
+    href: '/swap',
+    desc: 'Exchange between supported tokens at a quoted rate before you confirm.',
+  },
+]
+
+// --- Trust Center ---
+// Mirrors src/features/trust/TrustCenterPage.jsx (identity + reputation +
+// validation + on-chain evidence, all merged into one page at /trust).
+export const TRUST_CENTER_ITEMS = [
+  {
+    icon: IconCheck,
+    title: 'Identity Verification',
+    desc: 'Every agent\u2019s ERC-8004 identity is checked against the Identity Registry, not just claimed.',
   },
   {
     icon: IconStar,
-    title: 'Reputation',
-    desc: 'Submit scored feedback with tags and evidence, and track an agent\u2019s reputation timeline over time.',
+    title: 'Reputation History',
+    desc: 'Scored feedback builds into a timeline you can scroll back through, not a single opaque number.',
   },
   {
     icon: IconShield,
     title: 'Validation',
-    desc: 'Request validator reviews and follow requests from pending through completed, with full explorer traceability.',
+    desc: 'Independent validators move each request from pending to completed, visibly, on-chain.',
   },
   {
-    icon: IconTransfer,
-    title: 'ANV Transfer',
-    desc: 'Send ANV with live balances, a Max button, and a running history of recent recipients.',
-  },
-  {
-    icon: IconDashboard,
-    title: 'Live Dashboard',
-    desc: 'One view of wallet balances, agent status, network health, and recent on-chain activity.',
-  },
-  {
-    icon: IconTools,
-    title: 'Developer Tools',
-    desc: 'Chain ID, RPC, current block, gas price, and the full contract registry \u2014 copy-ready for your own build.',
-  },
-]
-
-// --- Architecture Timeline ---
-// A real sequence — the actual path a signed action takes through the
-// app — which is why it earns numbered steps (see UI Blueprint / frontend
-// design guidance: numbering only where order is informative).
-export const ARCHITECTURE_STEPS = [
-  {
-    icon: IconWallet,
-    title: 'Browser wallet signer',
-    desc: 'Every write goes through the connected wallet. No raw private keys are ever read or stored by the app.',
-  },
-  {
-    icon: IconLayers,
-    title: 'ethers.js v6',
-    desc: 'A framework-agnostic blockchain service layer wraps contract calls behind typed helpers the UI can trust.',
+    icon: IconBook,
+    title: 'Auditability',
+    desc: 'Certificates and on-chain evidence back every score \u2014 nothing here is self-reported.',
   },
   {
     icon: IconActivity,
-    title: `Arc Testnet \u00b7 chain ${ARC_CHAIN_ID}`,
-    desc: `Requests settle over ${ARC_RPC_URL}, the one RPC endpoint every module reads from.`,
-  },
-  {
-    icon: IconShield,
-    title: 'ERC-8004 contracts',
-    desc: 'Identity, Reputation, Validation, and ANV Token \u2014 four registries, each with a single canonical address.',
-  },
-  {
-    icon: IconDashboard,
-    title: 'Live UI feedback',
-    desc: 'Confirmations, balances, and reputation scores update from on-chain events \u2014 no polling a mock API.',
+    title: 'Transparency',
+    desc: 'A live security and events feed, so trust signals reflect what just happened, not a stale snapshot.',
   },
 ]
 
-// --- Roadmap ---
-export const ROADMAP = [
-  { status: 'done', title: 'Core dashboard', desc: 'Identity, reputation, validation, and transfer flows on Arc Testnet.' },
-  { status: 'done', title: 'Design system pass', desc: 'Glassmorphic UI, dark/light themes, unified component library.' },
-  { status: 'done', title: 'Agent marketplace', desc: 'Browse, filter, and evaluate registered agents by track record.' },
-  { status: 'active', title: 'Agentic commerce jobs', desc: 'ERC-8183 job lifecycle \u2014 post, accept, deliver, and settle jobs on-chain.' },
-  { status: 'planned', title: 'Multi-chain support', desc: 'Extend the registry pattern beyond Arc Testnet.' },
+// --- Developer Experience ---
+export const DEV_EXPERIENCE_ITEMS = [
+  {
+    icon: IconLayers,
+    title: 'Registry SDK',
+    desc: 'Typed helpers over the four core registries \u2014 identity, reputation, validation, and the ANV token.',
+  },
+  {
+    icon: IconTools,
+    title: 'React Components',
+    desc: 'The same UI kit (GlassPanel, SectionHeading, Reveal, and more) this app is built with.',
+  },
+  {
+    icon: IconZap,
+    title: 'ethers.js Integration',
+    desc: 'Read/write contract hooks with centralized error normalization, ready to extend.',
+  },
+  {
+    icon: IconCheck,
+    title: 'TypeScript Support',
+    desc: 'Typed ABIs and contract addresses from a single registry, so integration errors surface at build time.',
+  },
+  {
+    icon: IconAgent,
+    title: 'Smart Contract APIs',
+    desc: 'Direct calls into Identity, Reputation, Validation, and the ANV token \u2014 addresses never hardcoded.',
+  },
+  {
+    icon: IconBook,
+    title: 'Documentation',
+    desc: 'Architecture, blockchain integration, and development guides, kept in the repo alongside the code.',
+  },
 ]
 
-// --- Marketplace preview ---
-// A read-only slice of the real marketplace catalog (src/data/agents.js) —
-// the preview card shows actual listing data, never invented figures, and
-// automatically stays in sync if the catalog changes.
-export const MARKETPLACE_PREVIEW_AGENTS = AGENTS.slice(0, 3).map((agent) => ({
-  name: agent.name,
-  category: agent.category,
-  reputation: agent.reputation,
-  completedJobs: agent.completedJobs,
-  availability: agent.availability,
-  avatarColor: agent.avatarColor,
-}))
+// Representative snippet for the Developer Experience console preview \u2014
+// illustrative, not copy-pasted from a real file (kept short on purpose).
+export const DEV_CODE_SNIPPET = `import { CONTRACTS } from './contracts/registry'
+
+const identity = new Contract(
+  CONTRACTS.IDENTITY_REGISTRY.address,
+  CONTRACTS.IDENTITY_REGISTRY.abi,
+  signer
+)
+
+const tx = await identity.register(agentUri)
+await tx.wait()`
+
+// --- Platform Architecture ---
+// One entry per layer, top (entry point) to bottom (network). Kept as data
+// so the diagram component only handles layout, not the facts.
+export const ARCHITECTURE_LAYERS = [
+  { title: 'Arc Agent Hub', desc: 'Landing, dashboard, and every feature route' },
+  { title: 'Identity Registry', desc: 'ERC-8004 on-chain agent identity' },
+  { title: 'Reputation Registry', desc: 'Scored feedback and history' },
+  { title: 'Validation Registry', desc: 'Independent request validation' },
+  { title: 'Marketplace', desc: 'Browse and hire registered agents' },
+  { title: 'Dashboard', desc: 'Balances, activity, network health' },
+  { title: 'Wallet', desc: 'Non-custodial balances and connection' },
+  { title: 'Bridge', desc: 'Cross-network asset movement' },
+  { title: 'Payments', desc: 'Job payouts and settlements' },
+  { title: 'Swap', desc: 'Token-to-token exchange' },
+  { title: 'Arc Testnet', desc: `Chain settlement layer \u00b7 ${ARC_RPC_URL}` },
+]
+
+// --- Final CTA (JoinEcosystem) ---
+export const FINAL_CTA_LINKS = [
+  { label: 'Documentation', href: DOCS_URL, external: true },
+  { label: 'GitHub', href: REPO_URL, external: true },
+  { label: 'Marketplace', href: '/agents', external: false },
+  { label: 'Developer Docs', href: '/developer-tools', external: false },
+]
+
+// --- Footer ---
+export const FOOTER_LINKS = {
+  platform: [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Marketplace', href: '/marketplace' },
+    { label: 'Documentation', href: DOCS_URL, external: true },
+  ],
+  community: [
+    { label: 'GitHub', href: REPO_URL, external: true },
+    { label: 'Arc Testnet', href: ARC_RPC_URL, external: true },
+  ],
+}

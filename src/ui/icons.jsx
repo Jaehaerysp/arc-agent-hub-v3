@@ -113,3 +113,17 @@ export const IconTag = (p) => (
 export const IconSwap = (p) => (
   <svg {...base} {...p}><path d="M7 4v13M7 17l-3.5-3.5M7 17l3.5-3.5" /><path d="M17 20V7M17 7l3.5 3.5M17 7l-3.5 3.5" /></svg>
 )
+
+// Added for the Community & Ecosystem carousel — additive only, does not
+// change any existing icon export above.
+export const IconChevronLeft = (p) => (
+  <svg {...base} {...p}><path d="M15 5l-7 7 7 7" /></svg>
+)
+export const IconChevronRight = (p) => (
+  <svg {...base} {...p}><path d="M9 5l7 7-7 7" /></svg>
+)
+
+// Added for the footer's arrow accent — additive only.
+export const IconArrowUpRight = (p) => (
+  <svg {...base} {...p}><path d="M7 17L17 7M8 7h9v9" /></svg>
+)

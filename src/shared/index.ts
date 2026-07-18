@@ -1,42 +1,31 @@
 /**
- * src/shared/index.ts
+ * src/shared/components/index.ts
  *
- * ET-001 — Platform foundation.
+ * ET-002 — Shared Export Layer.
  *
- * Barrel entry point for the new `src/shared/` module. This gives future
- * code (in particular `src/sdk` and `src/plugins`) one stable import path
- * for cross-cutting, non-feature-specific building blocks, without moving
- * or changing any existing feature code.
+ * Re-export-only barrel. No component files were moved, renamed, or
+ * modified to produce this file.
  *
- * `src/shared/` is intentionally being scaffolded ahead of content:
- *   - config/  -> populated now (contracts.ts, chains.ts), re-exporting
- *                 the existing canonical config modules.
- *   - components/, hooks/, services/, types/, utils/ -> empty scaffolding
- *                 for now; nothing has been moved into them. See the TODOs
- *                 below and docs/PROJECT_AUDIT.md §14 for candidates.
+ * Two component libraries already exist in the codebase:
+ *   - src/ui/               (legacy — Button, Card, Badge, Tabs, etc.)
+ *   - src/ui/design-system/ (v7 premium design system — Button, Badge,
+ *                            Tabs, Skeleton, EmptyState, etc.)
+ *
+ * They intentionally share five symbol names (Badge, Button, EmptyState,
+ * Skeleton, Tabs) with different implementations — see
+ * docs/PROJECT_AUDIT.md §9/§14. A flat `export *` from both would create
+ * an ambiguous-binding collision, so each library is re-exported under
+ * its own namespace instead. This changes nothing about how existing
+ * pages import these components today (those imports are untouched);
+ * it only adds a new, optional single-surface way to reach both:
+ *
+ *   import { legacyUI, designSystem } from '@/shared/components'
+ *   const { Button } = designSystem
  */
 
-export * from './config/contracts'
-export * from './config/chains'
+export * as legacyUI from '../../ui'
+export * as designSystem from '../../ui/design-system'
 
-// TODO(ET-00x): Re-export shared UI primitives once `src/ui/` and
-// `src/ui/design-system/` are consolidated (docs/PROJECT_AUDIT.md §14,
-// item 2) into src/shared/components.
-// export * from './components'
-
-// TODO(ET-00x): Re-export cross-feature hooks (e.g. src/hooks/*) once a
-// decision is made on whether they move under src/shared/hooks or stay in
-// place with re-exports only, matching the config/ pattern above.
-// export * from './hooks'
-
-// TODO(ET-00x): Re-export cross-feature services once identified
-// (tokenRegistry.js is the leading candidate per docs/PROJECT_AUDIT.md §10).
-// export * from './services'
-
-// TODO(ET-00x): Shared TypeScript types/interfaces go here as the codebase
-// migrates incrementally toward TypeScript.
-// export * from './types'
-
-// TODO(ET-00x): Shared framework-agnostic utilities (formatting, etc.) —
-// candidate: src/lib/format.js.
-// export * from './utils'
+// TODO(ET-00x): Once the two kits are consolidated (docs/PROJECT_AUDIT.md
+// §14, item 2), this file collapses to a single flat `export *` from the
+// resulting unified library.

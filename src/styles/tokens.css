@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&display=swap');
 
 :root {
   /* Base surfaces — deep indigo-black, not pure black */
@@ -44,6 +44,7 @@
   --font-display: 'Space Grotesk', 'DM Sans', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'Space Mono', monospace;
+  --font-serif: 'Fraunces', Georgia, serif;
 
   --sidebar-w: 248px;
   --sidebar-w-collapsed: 76px;
