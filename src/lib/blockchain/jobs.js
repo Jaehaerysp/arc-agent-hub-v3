@@ -23,16 +23,46 @@
 import { getCommerceContract, getUsdcContract } from './contracts'
 import { AGENTIC_COMMERCE_ADDRESS, DEFAULT_JOB_EXPIRY_SECONDS, ZERO_ADDRESS } from './constants'
 import { hashText, formatJob } from './helpers'
-import { getReadProvider } from '../rpc/ethersAdapter'
 
-// Reads in this file (getJob / getUsdcAllowance / listJobsForAccount) used
-// to hand-roll their own rate-limit retry here because they all went
-// through the single shared public Arc RPC, which enforces a request-rate
-// limit that eth_getLogs/eth_call bursts could trip. That retry loop is
-// gone now — RpcManager (src/lib/rpc/RpcManager.ts) already retries with
-// exponential backoff, rate-limits per provider, and fails over to the
-// next of four providers, so every read below goes through
-// `getReadProvider()` instead of the hand-rolled loop.
+// The public Arc Testnet RPC (rpc.testnet.arc.network) is shared across every
+// app hitting it and enforces a request-rate limit. eth_getLogs / eth_call
+// bursts (e.g. this file's queryFilter + one getJob per job, every poll
+// tick) can trip that limit with a "request limit reached" error even when
+// nothing in the app itself is broken. Retry with backoff instead of
+// surfacing the raw RPC rejection on every transient throttle.
+const RATE_LIMIT_RETRIES = 3
+const RATE_LIMIT_BASE_DELAY_MS = 1000
+
+function isRateLimitError(err) {
+  const msg = (
+    err?.error?.message ||
+    err?.error?.details ||
+    err?.info?.error?.message ||
+    err?.shortMessage ||
+    err?.message ||
+    ''
+  ).toLowerCase()
+  return msg.includes('request limit') || msg.includes('rate limit') || msg.includes('too many requests')
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Retries `fn` with exponential backoff, but only for RPC rate-limit rejections. */
+async function withRateLimitRetry(fn) {
+  let attempt = 0
+  for (;;) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (attempt >= RATE_LIMIT_RETRIES || !isRateLimitError(err)) throw err
+      const backoff = RATE_LIMIT_BASE_DELAY_MS * 2 ** attempt + Math.random() * 250
+      attempt += 1
+      await delay(backoff)
+    }
+  }
+}
 
 // Terminal job statuses never change on-chain again, so once a job resolves
 // to one of these there is no need to re-fetch it on every poll tick — that
@@ -113,15 +143,10 @@ export async function completeJob(signer, jobId, reasonText) {
   return { ...result, reasonHash }
 }
 
-/**
- * Reads a job by id. `signerOrProvider` is accepted for backwards
- * compatibility with existing call sites but is no longer used for the
- * actual read — getJob() is a pure view call, so it always goes through
- * RpcManager's resilient provider instead, regardless of what's passed.
- */
-export async function getJob(_signerOrProvider, jobId) {
-  const contract = getCommerceContract(getReadProvider())
-  const job = await contract.getJob(jobId)
+/** Reads a job by id. Accepts a signer or a plain provider (read-only). */
+export async function getJob(signerOrProvider, jobId) {
+  const contract = getCommerceContract(signerOrProvider)
+  const job = await withRateLimitRetry(() => contract.getJob(jobId))
   return formatJob(job)
 }
 
@@ -130,8 +155,8 @@ export async function getJob(_signerOrProvider, jobId) {
  * pull on `owner`'s behalf — used to decide whether "Approve USDC" or
  * "Fund Job" is the correct next action for a job in the Open status.
  */
-export async function getUsdcAllowance(_signerOrProvider, owner) {
-  const usdc = getUsdcContract(getReadProvider())
+export async function getUsdcAllowance(signerOrProvider, owner) {
+  const usdc = getUsdcContract(signerOrProvider)
   return usdc.allowance(owner, AGENTIC_COMMERCE_ADDRESS)
 }
 
@@ -142,23 +167,23 @@ export async function getUsdcAllowance(_signerOrProvider, owner) {
  * jobs where the account is client OR provider, then resolving each id with
  * the same verified getJob() above. Read-only; does not touch any write path.
  */
-export async function listJobsForAccount(_signerOrProvider, account) {
-  const readProvider = getReadProvider()
-  const contract = getCommerceContract(readProvider)
+export async function listJobsForAccount(signerOrProvider, account) {
+  const contract = getCommerceContract(signerOrProvider)
+  const provider = signerOrProvider.provider ?? signerOrProvider
 
-  const latest = await readProvider.getBlockNumber()
+  const latest = await withRateLimitRetry(() => provider.getBlockNumber())
 
   // Arc RPC allows max 10,000 blocks per request
   const fromBlock = Math.max(0, latest - 10000)
 
-  // Still run sequentially rather than Promise.all — RpcManager rate-limits
-  // per provider, but a tiny gap between these two eth_getLogs calls is
-  // cheap insurance and avoids burning through the token bucket in one tick.
-  const clientLogs = await contract.queryFilter(contract.filters.JobCreated(null, account), fromBlock, latest)
-  const providerLogs = await contract.queryFilter(
-    contract.filters.JobCreated(null, null, account),
-    fromBlock,
-    latest
+  // Run sequentially rather than Promise.all — two eth_getLogs calls fired
+  // in the same instant count as a burst of 2 against the shared RPC's
+  // rate limit; a tiny gap between them is cheap and avoids tripping it.
+  const clientLogs = await withRateLimitRetry(() =>
+    contract.queryFilter(contract.filters.JobCreated(null, account), fromBlock, latest)
+  )
+  const providerLogs = await withRateLimitRetry(() =>
+    contract.queryFilter(contract.filters.JobCreated(null, null, account), fromBlock, latest)
   )
 
   const map = new Map()
@@ -180,7 +205,7 @@ export async function listJobsForAccount(_signerOrProvider, account) {
       // usually most of the reduction in RPC calls once a wallet has any
       // job history.
       const cached = jobCache.get(jobId)
-      const job = cached ?? (await getJob(null, jobId))
+      const job = cached ?? (await getJob(provider, jobId))
 
       if (!cached && TERMINAL_STATUSES.has(job.status)) {
         jobCache.set(jobId, job)

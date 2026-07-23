@@ -1,5 +1,5 @@
 /**
- * src/shared/index.ts
+ * src/shared/components/index.ts
  *
  * ET-002 — Shared Export Layer.
  *
@@ -23,8 +23,8 @@
  *   const { Button } = designSystem
  */
 
-export * as legacyUI from '../ui'
-export * as designSystem from '../ui/design-system'
+export * as legacyUI from '../../ui'
+export * as designSystem from '../../ui/design-system'
 
 // TODO(ET-00x): Once the two kits are consolidated (docs/PROJECT_AUDIT.md
 // §14, item 2), this file collapses to a single flat `export *` from the
