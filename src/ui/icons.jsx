@@ -81,9 +81,6 @@ export const IconSearch = (p) => (
 export const IconActivity = (p) => (
   <svg {...base} {...p}><path d="M3 12h4l2-7 4 14 2-7h6" /></svg>
 )
-export const IconRefresh = (p) => (
-  <svg {...base} {...p}><path d="M3 12a9 9 0 0115.4-6.4L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 01-15.4 6.4L3 16" /><path d="M3 21v-5h5" /></svg>
-)
 export const IconBell = (p) => (
   <svg {...base} {...p}><path d="M6 8a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6z" /><path d="M10 20a2 2 0 004 0" /></svg>
 )

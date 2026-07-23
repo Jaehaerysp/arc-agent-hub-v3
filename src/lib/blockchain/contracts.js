@@ -22,11 +22,8 @@ export const ERC8183_CONTRACTS = {
 
 /**
  * Returns an ethers.Contract for the Agentic Commerce job contract.
- * Pass a signer for writes (createJob/setBudget/fund/submit/complete). For
- * reads, pass `getReadProvider()` from `src/lib/rpc/ethersAdapter` (the
- * RpcManager-backed provider) rather than the connected wallet's
- * provider — every read call site in this app (jobs.js) already does
- * this, so the wallet's own RPC is only ever used for signing/broadcast.
+ * Pass a signer for writes (createJob/setBudget/fund/submit/complete) or a
+ * provider for reads (getJob) — same convention as useContractWrite/useBalances.
  */
 export function getCommerceContract(signerOrProvider) {
   return new ethers.Contract(AGENTIC_COMMERCE_ADDRESS, AGENTIC_COMMERCE_ABI, signerOrProvider)

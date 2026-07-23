@@ -8,21 +8,15 @@
 import { ethers } from 'ethers'
 import { ERC20_ABI } from '../../../contracts/abis/erc20'
 import { WALLET_TOKENS } from './tokenRegistry'
-import { getReadProvider } from '../../../lib/rpc/ethersAdapter'
 
 /**
  * Reads a single ERC-20 balance for `account`. Never throws — a failed read
  * (bad RPC, unsupported token, etc.) resolves to an error entry so one bad
  * token can't take down the rest of the batch.
- *
- * `provider` is kept as a parameter (fetchTokenBalances below still uses
- * it as the "is a wallet connected" gate) but the actual chain read
- * always goes through RpcManager's resilient provider instead — see
- * src/lib/rpc/ethersAdapter.js.
  */
 export async function fetchTokenBalance(provider, token, account) {
   try {
-    const contract = new ethers.Contract(token.address, ERC20_ABI, getReadProvider())
+    const contract = new ethers.Contract(token.address, ERC20_ABI, provider)
     const raw = await contract.balanceOf(account)
     const balance = Number(ethers.formatUnits(raw, token.decimals))
 
