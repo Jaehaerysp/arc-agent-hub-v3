@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { CONTRACTS } from '../contracts/registry'
 import { usePolling } from './usePolling'
+import { getReadProvider } from '../lib/rpc/ethersAdapter'
 
 // Background poll cadence. Was 15s — widened to the 60-90s "background
 // refresh only" window (Sprint 2 Wallet Performance Optimization) since
@@ -43,9 +44,15 @@ export function useBalances(provider, account) {
       if (showLoading) setLoading(true)
 
       try {
+        // Reads go through RpcManager's resilient provider, not the
+        // wallet's own `provider` — `provider` here is only the gate for
+        // "is a wallet connected" above; the actual RPC call is
+        // decoupled from whatever single endpoint the wallet happens to
+        // be pointed at.
+        const readProvider = getReadProvider()
         const [native, anvContract] = [
-          provider.getBalance(account),
-          new ethers.Contract(CONTRACTS.ANV_TOKEN.address, CONTRACTS.ANV_TOKEN.abi, provider),
+          readProvider.getBalance(account),
+          new ethers.Contract(CONTRACTS.ANV_TOKEN.address, CONTRACTS.ANV_TOKEN.abi, readProvider),
         ]
 
         const [nativeRaw, anvRaw] = await Promise.all([native, anvContract.balanceOf(account)])

@@ -13,6 +13,7 @@
 import { ethers } from 'ethers'
 import { ERC20_ABI } from '../../../contracts/abis/erc20'
 import { USDC_ADDRESS } from '../../../lib/blockchain/constants'
+import { getReadProvider } from '../../../lib/rpc/ethersAdapter'
 
 // `getUsdcContract`/`USDC_ABI` in lib/blockchain (the ERC-8183 job-funding
 // helpers) only expose approve/balanceOf/allowance — no `transfer`, since
@@ -52,17 +53,18 @@ export const USDC_TOKEN = {
  * Never throws: a failed estimate resolves to `{ ...null fields, error }`
  * so the form can still let the person attempt the send.
  */
-export async function estimateTransferFee(token, signerOrProvider, from, to, amount) {
+export async function estimateTransferFee(token, _signerOrProvider, from, to, amount) {
   try {
     if (!ethers.isAddress(to)) throw new Error('Invalid recipient address')
     if (!amount || Number(amount) <= 0) throw new Error('Invalid amount')
 
-    const contract = new ethers.Contract(token.address, ERC20_ABI, signerOrProvider)
+    const readProvider = getReadProvider()
+    const contract = new ethers.Contract(token.address, ERC20_ABI, readProvider)
     const parsedAmount = ethers.parseUnits(amount, token.decimals)
 
     const [gasUnits, feeData] = await Promise.all([
       contract.transfer.estimateGas(to, parsedAmount, { from }),
-      signerOrProvider.getFeeData ? signerOrProvider.getFeeData() : signerOrProvider.provider.getFeeData(),
+      readProvider.getFeeData(),
     ])
 
     const gasPrice = feeData.gasPrice ?? 0n

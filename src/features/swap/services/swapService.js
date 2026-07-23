@@ -43,6 +43,11 @@
 // (matching how Bridge/Payments never invent server infrastructure that
 // doesn't already exist in this repo).
 
+// Not migrated to RpcManager: `kit.swap()` signs and broadcasts through
+// the Circle App Kit adapter built from `window.ethereum` (the connected
+// wallet), never through a plain RPC URL — so there is no read-only RPC
+// call here for RpcManager to front. This is intentional, not an
+// oversight; see the RPC migration report for the full read/write split.
 import { AppKit } from '@circle-fin/app-kit'
 import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2'
 import logger from '../../../utils/logger'

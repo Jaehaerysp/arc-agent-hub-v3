@@ -19,6 +19,7 @@
 
 import { ethers } from 'ethers'
 import { ERC20_ABI } from '../../../contracts/abis/erc20'
+import { getReadProvider } from '../../../lib/rpc/ethersAdapter'
 
 /**
  * Typical arrival windows by transfer speed, per Circle's published CCTP
@@ -40,17 +41,18 @@ export function estimateBridgeArrival(networkId) {
  * `{ ...null fields, error }` so the form can still proceed; the estimate
  * is advisory, same as Payments'.
  */
-export async function estimateBridgeFee(token, signerOrProvider, from, amount, spender) {
+export async function estimateBridgeFee(token, _signerOrProvider, from, amount, spender) {
   try {
     if (!amount || Number(amount) <= 0) throw new Error('Invalid amount')
     if (!spender || !ethers.isAddress(spender)) throw new Error('No bridge contract configured for this network')
 
-    const contract = new ethers.Contract(token.address, ERC20_ABI, signerOrProvider)
+    const readProvider = getReadProvider()
+    const contract = new ethers.Contract(token.address, ERC20_ABI, readProvider)
     const parsedAmount = ethers.parseUnits(amount, token.decimals)
 
     const [gasUnits, feeData] = await Promise.all([
       contract.approve.estimateGas(spender, parsedAmount, { from }),
-      signerOrProvider.getFeeData ? signerOrProvider.getFeeData() : signerOrProvider.provider.getFeeData(),
+      readProvider.getFeeData(),
     ])
 
     const gasPrice = feeData.gasPrice ?? 0n

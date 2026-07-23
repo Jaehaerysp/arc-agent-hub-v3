@@ -1,11 +1,15 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useWalletContext } from '../../app/providers/WalletProvider'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
+import { useRpcHealth } from '../devtools/useRpcHealth'
+import RpcResiliencePanel from '../devtools/RpcResiliencePanel'
+import { useToast } from '../../hooks/useToast'
 import { CONTRACTS } from '../../contracts/registry'
-import { ARC_CHAIN_ID, ARC_RPC_URL, ARC_EXPLORER_URL } from '../../chains/arc'
+import { ARC_CHAIN_ID, ARC_EXPLORER_URL } from '../../chains/arc'
 import { Container, Section, Panel, Grid, Badge, EmptyState } from '../../ui/design-system'
 import { CopyButton } from '../../ui/CopyButton'
 import { formatTime, shortHash } from '../../lib/format'
+import { getLatencyVariant, formatLatency, describeProviderSwitch } from '../../lib/rpc/latency'
 import { IconTools, IconActivity, IconBook, IconCheck } from '../../ui/icons'
 
 const DOC_LINKS = [
@@ -24,14 +28,46 @@ function statusBadge(status) {
 /**
  * Developer Tools v7 (Mission 8) — same data sources as the previous
  * page (wallet context, `CONTRACTS`, static doc links), plus the shared
- * `useNetworkStatus` hook (block number, gas price, real round-trip
- * latency) instead of its own inline `useEffect` polling loop. Adds a
- * Diagnostics panel that's purely derived pass/fail badges over data
- * already on the page — no new reads.
+ * `useNetworkStatus` hook for block number and gas price. Latency is
+ * deliberately *not* pulled from `useNetworkStatus` here — that hook's
+ * own `performance.now()` timing was a second, independent latency
+ * measurement running alongside RpcManager's. This page now has a
+ * single source of truth for latency: `useRpcHealth()`, which mirrors
+ * `RpcManager.getMetrics()` (the same snapshot the RPC Resilience panel
+ * below reads), so "Wallet & Network" always shows the active
+ * provider's actual measured latency, never a stale or diverging value.
+ *
+ * Also watches for the active provider changing and surfaces a toast
+ * ("Switched from X to Y due to ...") so a failover/re-rank isn't silent.
+ *
+ * The Diagnostics panel below is purely derived pass/fail badges over
+ * data already on the page — no new reads.
  */
 export default function DeveloperToolsPage() {
   const { account, provider, chainId, isArcNetwork, signer, activity, arcExplorer } = useWalletContext()
-  const { blockNumber, gasPriceGwei, latencyMs } = useNetworkStatus(provider)
+  const { blockNumber, gasPriceGwei } = useNetworkStatus(provider)
+  const rpcHealth = useRpcHealth()
+  const { toast } = useToast()
+
+  // Requirement #8 — notify on provider switch. Tracks the previous
+  // active provider so we can name both sides of the switch; skips the
+  // very first selection (nothing to have "switched" from yet).
+  const previousProvider = useRef({ id: rpcHealth.activeProviderId, label: rpcHealth.activeProviderLabel })
+  useEffect(() => {
+    const prev = previousProvider.current
+    const changed =
+      prev.id !== null && rpcHealth.activeProviderId !== null && prev.id !== rpcHealth.activeProviderId
+
+    if (changed) {
+      toast({
+        title: 'RPC provider switched',
+        description: describeProviderSwitch(prev.label ?? prev.id, rpcHealth.activeProviderLabel ?? rpcHealth.activeProviderId, rpcHealth.selectionReason),
+        variant: rpcHealth.selectionReason === 'failover' ? 'warning' : 'default',
+      })
+    }
+
+    previousProvider.current = { id: rpcHealth.activeProviderId, label: rpcHealth.activeProviderLabel }
+  }, [rpcHealth.activeProviderId, rpcHealth.activeProviderLabel, rpcHealth.selectionReason, toast])
 
   const diagnostics = useMemo(
     () => [
@@ -39,9 +75,10 @@ export default function DeveloperToolsPage() {
       { label: 'Signer available', ok: Boolean(signer) },
       { label: 'Correct network (Arc Testnet)', ok: isArcNetwork },
       { label: 'RPC reachable', ok: blockNumber !== null },
+      { label: 'RPC resilience layer healthy', ok: rpcHealth.status !== 'down' },
       { label: 'Registry contracts configured', ok: Object.values(CONTRACTS).length === 4 },
     ],
-    [account, signer, isArcNetwork, blockNumber]
+    [account, signer, isArcNetwork, blockNumber, rpcHealth.status]
   )
 
   return (
@@ -63,12 +100,16 @@ export default function DeveloperToolsPage() {
               </span>
             </div>
             <div className="wv7-devtools-row">
-              <span className="wv7-devtools-label">RPC URL</span>
-              <span className="wv7-devtools-value mono">{ARC_RPC_URL}<CopyButton value={ARC_RPC_URL} label="" /></span>
+              <span className="wv7-devtools-label">Active RPC provider</span>
+              <span className="wv7-devtools-value mono">{rpcHealth.activeProviderLabel ?? 'Detecting…'}</span>
             </div>
             <div className="wv7-devtools-row">
               <span className="wv7-devtools-label">Latency</span>
-              <span className="wv7-devtools-value mono">{latencyMs !== null ? `${latencyMs} ms` : '—'}</span>
+              <span className="wv7-devtools-value mono">
+                <Badge variant={getLatencyVariant(rpcHealth.latencyMs)} size="sm">
+                  {formatLatency(rpcHealth.latencyMs)}
+                </Badge>
+              </span>
             </div>
             <div className="wv7-devtools-row">
               <span className="wv7-devtools-label">Latest block</span>
@@ -80,6 +121,10 @@ export default function DeveloperToolsPage() {
             </div>
           </Grid>
         </Panel>
+      </Section>
+
+      <Section spacing="md">
+        <RpcResiliencePanel />
       </Section>
 
       <Section spacing="md">
